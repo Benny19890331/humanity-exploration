@@ -95,6 +95,7 @@ function App() {
       setCurrentQuestion(0);
       setAnswers([]);
       setIsComplete(false);
+      setShowIntro(true);
     }, 'backward');
   }, [transitionTo]);
 
