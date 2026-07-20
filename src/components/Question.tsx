@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { m } from 'motion/react';
 import { QuestionType } from '../types';
 
 interface QuestionProps {
@@ -9,7 +10,6 @@ interface QuestionProps {
   currentNumber: number;
   total: number;
   showPrevious: boolean;
-  disabled: boolean;
 }
 
 function hashOption(text: string, seed: number) {
@@ -27,7 +27,6 @@ export function Question({
   currentNumber,
   total,
   showPrevious,
-  disabled,
 }: QuestionProps) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
@@ -46,7 +45,7 @@ export function Question({
   };
 
   const chooseOption = (value: number, originalIndex: number) => {
-    if (disabled || selectedOption !== null) return;
+    if (selectedOption !== null) return;
     setSelectedOption(originalIndex);
     onAnswer(value);
   };
@@ -58,14 +57,16 @@ export function Question({
           問題 {currentNumber} / {total}
         </div>
         {showPrevious && (
-          <button
+          <m.button
             onClick={onPrevious}
             className="previous-button"
-            disabled={disabled}
+            whileHover={{ x: -2 }}
+            whileTap={{ x: -1, scale: 0.96 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.18 }}
           >
             <ArrowLeft aria-hidden="true" />
             上一題
-          </button>
+          </m.button>
         )}
       </div>
 
@@ -73,18 +74,28 @@ export function Question({
 
       <div className="option-stack">
         {shuffledOptions.map(({ option, originalIndex }, displayIndex) => (
-          <button
+          <m.button
             key={originalIndex}
             onClick={() => chooseOption(option.value, originalIndex)}
             onPointerMove={handleOptionPointerMove}
             className={`liquid-option ${selectedOption === originalIndex ? 'is-selected' : ''}`}
-            disabled={disabled || selectedOption !== null}
+            disabled={selectedOption !== null}
             style={{ '--option-order': displayIndex } as React.CSSProperties}
+            initial={{ opacity: 0, y: 10, scale: 0.992 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            whileHover={{ y: -2, scale: 1.006 }}
+            whileTap={{ y: 0, scale: 0.975, transition: { duration: 0.08, ease: 'easeOut' } }}
+            transition={{
+              type: 'spring',
+              bounce: 0,
+              duration: 0.34,
+              delay: 0.025 + displayIndex * 0.035,
+            }}
           >
             <span className="option-reflection" aria-hidden="true" />
             <span className="option-text">{option.text}</span>
             <span className="option-arrow" aria-hidden="true">→</span>
-          </button>
+          </m.button>
         ))}
       </div>
     </section>
