@@ -2,20 +2,20 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "2026人性探索",
+  title: "人性探索",
   description: "人性探索測試",
   icons: {
     icon: "/rich-team-logo.png",
   },
   openGraph: {
-    title: "2026人性探索",
+    title: "人性探索",
     description: "人性探索測試",
     images: ["/og.png"],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "2026人性探索",
+    title: "人性探索",
     description: "人性探索測試",
     images: ["/og.png"],
   },

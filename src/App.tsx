@@ -6,8 +6,8 @@ import { Question } from './components/Question';
 type TransitionPhase = 'idle' | 'exit' | 'enter';
 type TransitionDirection = 'forward' | 'backward';
 
-const EXIT_DURATION = 330;
-const ENTER_DURATION = 680;
+const EXIT_DURATION = 220;
+const ENTER_DURATION = 500;
 
 function App() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -90,18 +90,14 @@ function App() {
         <span className="aurora aurora-one" />
         <span className="aurora aurora-two" />
         <span className="aurora aurora-three" />
+        <span className="light-stream stream-one" />
+        <span className="light-stream stream-two" />
         <span className="grain" />
         <span className="pointer-aura" />
       </div>
 
       <div className="shell">
         <header className="hero">
-          <img
-            src="https://images.unsplash.com/photo-1516534775068-ba3e7458af70?auto=format&fit=crop&q=80&w=2070"
-            alt="Mindfulness"
-            className="hero-image"
-          />
-          <div className="hero-veil" />
           <div className="brand-lockup">
             <div className="logo-vessel">
               <span className="logo-glint" aria-hidden="true" />

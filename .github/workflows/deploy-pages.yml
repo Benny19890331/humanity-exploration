@@ -1,4 +1,4 @@
-name: Deploy 2026人性探索
+name: Deploy 人性探索
 
 on:
   push:
@@ -46,4 +46,3 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
-
