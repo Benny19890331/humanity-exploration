@@ -8,6 +8,16 @@ type TransitionDirection = 'forward' | 'backward';
 
 const EXIT_DURATION = 220;
 const ENTER_DURATION = 500;
+const INTRO_DURATION = 2500;
+const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen';
+
+function shouldShowIntro() {
+  try {
+    return window.sessionStorage.getItem(INTRO_STORAGE_KEY) !== '1';
+  } catch {
+    return true;
+  }
+}
 
 function App() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -15,8 +25,26 @@ function App() {
   const [isComplete, setIsComplete] = useState(false);
   const [phase, setPhase] = useState<TransitionPhase>('enter');
   const [direction, setDirection] = useState<TransitionDirection>('forward');
+  const [showIntro, setShowIntro] = useState(shouldShowIntro);
   const timers = useRef<number[]>([]);
   const experienceRef = useRef<HTMLDivElement>(null);
+
+  const dismissIntro = useCallback(() => {
+    setShowIntro(false);
+    try {
+      window.sessionStorage.setItem(INTRO_STORAGE_KEY, '1');
+    } catch {
+      // The intro can still complete when storage is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!showIntro) return;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const introTimer = window.setTimeout(dismissIntro, reduceMotion ? 80 : INTRO_DURATION);
+    return () => window.clearTimeout(introTimer);
+  }, [dismissIntro, showIntro]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => setPhase('idle'), ENTER_DURATION);
@@ -86,6 +114,24 @@ function App() {
 
   return (
     <div className="experience" ref={experienceRef} onPointerMove={handlePointerMove}>
+      {showIntro && (
+        <div className="intro-overlay" aria-label="Rich Team 品牌開場">
+          <span className="intro-glow intro-glow-one" aria-hidden="true" />
+          <span className="intro-glow intro-glow-two" aria-hidden="true" />
+          <div className="intro-logo-vessel">
+            <span className="intro-orbit" aria-hidden="true" />
+            <span className="intro-logo-glint" aria-hidden="true" />
+            <img src={logoUrl} alt="Rich Team Elite Group" className="intro-logo" />
+          </div>
+          <button
+            type="button"
+            className="intro-dismiss"
+            onClick={dismissIntro}
+            aria-label="略過開場動畫"
+          />
+        </div>
+      )}
+
       <div className="atmosphere" aria-hidden="true">
         <span className="aurora aurora-one" />
         <span className="aurora aurora-two" />
