@@ -5,6 +5,11 @@ import { Question } from './components/Question';
 
 type TransitionPhase = 'idle' | 'exit' | 'enter';
 type TransitionDirection = 'forward' | 'backward';
+type MotionPermissionState = 'granted' | 'denied' | 'prompt';
+
+type PermissionedDeviceOrientationEvent = typeof DeviceOrientationEvent & {
+  requestPermission?: () => Promise<MotionPermissionState>;
+};
 
 const EXIT_DURATION = 220;
 const ENTER_DURATION = 500;
@@ -50,6 +55,113 @@ function App() {
     const timer = window.setTimeout(() => setPhase('idle'), ENTER_DURATION);
     timers.current.push(timer);
     return () => timers.current.forEach(window.clearTimeout);
+  }, []);
+
+  useEffect(() => {
+    const experience = experienceRef.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+
+    if (!experience || reducedMotion || !coarsePointer || !('DeviceOrientationEvent' in window)) {
+      return;
+    }
+
+    let isListening = false;
+    let animationFrame: number | null = null;
+    let baseBeta: number | null = null;
+    let baseGamma: number | null = null;
+    let currentX = 0;
+    let currentY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    const clamp = (value: number) => Math.max(-1, Math.min(1, value));
+    const angleDelta = (value: number, base: number) => ((value - base + 540) % 360) - 180;
+
+    const renderMotion = () => {
+      currentX += (targetX - currentX) * 0.14;
+      currentY += (targetY - currentY) * 0.14;
+
+      const intensity = Math.min(1, Math.hypot(currentX, currentY));
+      experience.style.setProperty('--gyro-stream-x', `${(currentX * 14).toFixed(2)}px`);
+      experience.style.setProperty('--gyro-stream-y', `${(currentY * 10).toFixed(2)}px`);
+      experience.style.setProperty('--gyro-stream-x-inverse', `${(currentX * -9).toFixed(2)}px`);
+      experience.style.setProperty('--gyro-stream-y-inverse', `${(currentY * -7).toFixed(2)}px`);
+      experience.style.setProperty('--gyro-stream-rotate', `${(currentX * 1.15).toFixed(2)}deg`);
+      experience.style.setProperty('--gyro-stream-rotate-inverse', `${(currentX * -0.72).toFixed(2)}deg`);
+      experience.style.setProperty('--gyro-aurora-x', `${(currentX * 5).toFixed(2)}px`);
+      experience.style.setProperty('--gyro-aurora-y', `${(currentY * 4).toFixed(2)}px`);
+      experience.style.setProperty('--gyro-light-brightness', (1 + intensity * 0.08).toFixed(3));
+
+      if (Math.abs(targetX - currentX) > 0.002 || Math.abs(targetY - currentY) > 0.002) {
+        animationFrame = window.requestAnimationFrame(renderMotion);
+      } else {
+        animationFrame = null;
+      }
+    };
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      if (event.beta === null || event.gamma === null) return;
+
+      if (baseBeta === null || baseGamma === null) {
+        baseBeta = event.beta;
+        baseGamma = event.gamma;
+        experience.dataset.gyro = 'active';
+        return;
+      }
+
+      targetX = clamp(angleDelta(event.gamma, baseGamma) / 18);
+      targetY = clamp(angleDelta(event.beta, baseBeta) / 24);
+
+      if (animationFrame === null) {
+        animationFrame = window.requestAnimationFrame(renderMotion);
+      }
+    };
+
+    const resetBaseline = () => {
+      baseBeta = null;
+      baseGamma = null;
+      targetX = 0;
+      targetY = 0;
+      if (animationFrame === null) {
+        animationFrame = window.requestAnimationFrame(renderMotion);
+      }
+    };
+
+    const enableMotion = () => {
+      if (isListening) return;
+      isListening = true;
+      window.addEventListener('deviceorientation', handleOrientation, { passive: true });
+      window.addEventListener('orientationchange', resetBaseline, { passive: true });
+    };
+
+    const orientationEvent = window.DeviceOrientationEvent as PermissionedDeviceOrientationEvent;
+    const requestPermission = orientationEvent.requestPermission;
+
+    const requestMotionOnGesture = () => {
+      if (typeof requestPermission !== 'function') return;
+      void requestPermission.call(orientationEvent)
+        .then(permission => {
+          if (permission === 'granted') enableMotion();
+        })
+        .catch(() => {
+          // Motion remains optional when the user or browser declines access.
+        });
+    };
+
+    if (typeof requestPermission === 'function') {
+      window.addEventListener('pointerup', requestMotionOnGesture, { once: true, passive: true });
+    } else {
+      enableMotion();
+    }
+
+    return () => {
+      window.removeEventListener('pointerup', requestMotionOnGesture);
+      window.removeEventListener('deviceorientation', handleOrientation);
+      window.removeEventListener('orientationchange', resetBaseline);
+      if (animationFrame !== null) window.cancelAnimationFrame(animationFrame);
+      delete experience.dataset.gyro;
+    };
   }, []);
 
   const transitionTo = useCallback((next: () => void, nextDirection: TransitionDirection) => {
