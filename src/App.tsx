@@ -9,7 +9,7 @@ type TransitionDirection = 'forward' | 'backward';
 const EXIT_DURATION = 220;
 const ENTER_DURATION = 500;
 const INTRO_DURATION = 4200;
-const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v2';
+const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v3';
 
 function shouldShowIntro() {
   try {

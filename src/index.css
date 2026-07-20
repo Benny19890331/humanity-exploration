@@ -106,22 +106,24 @@ button {
 .intro-logo-vessel {
   position: relative;
   z-index: 3;
-  width: clamp(230px, 34vw, 350px);
-  aspect-ratio: 1.52;
+  isolation: isolate;
+  width: clamp(230px, 72vw, 360px);
+  aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  border-radius: 38% 44% 35% 42% / 42% 33% 46% 38%;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  border-radius: 50%;
   background:
-    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.96), transparent 28%),
-    radial-gradient(circle at 76% 82%, rgba(255, 214, 126, 0.2), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.15));
+    radial-gradient(circle at 28% 17%, rgba(255, 255, 255, 0.98) 0 2%, rgba(255, 255, 255, 0.58) 9%, transparent 27%),
+    radial-gradient(circle at 72% 82%, rgba(255, 216, 130, 0.24), transparent 34%),
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.5) 0%, rgba(235, 247, 255, 0.29) 58%, rgba(162, 210, 245, 0.16) 79%, rgba(255, 255, 255, 0.62) 100%);
   box-shadow:
-    0 32px 80px rgba(30, 83, 134, 0.22),
-    0 0 70px rgba(255, 211, 110, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.98),
-    inset 18px 20px 36px rgba(255, 255, 255, 0.3),
-    inset -18px -22px 40px rgba(75, 151, 216, 0.08);
-  backdrop-filter: blur(24px) saturate(145%);
+    0 38px 88px rgba(30, 83, 134, 0.2),
+    0 0 0 7px rgba(255, 255, 255, 0.12),
+    0 0 76px rgba(255, 211, 110, 0.28),
+    inset 0 0 0 4px rgba(255, 255, 255, 0.34),
+    inset 16px 18px 36px rgba(255, 255, 255, 0.68),
+    inset -18px -24px 42px rgba(75, 151, 216, 0.13);
+  backdrop-filter: blur(26px) saturate(150%);
   backface-visibility: hidden;
   will-change: transform, opacity;
   animation: introLogoFlight 4200ms cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -130,10 +132,26 @@ button {
 .intro-logo-vessel::before {
   content: "";
   position: absolute;
-  inset: 1px;
+  z-index: 4;
+  top: 6%;
+  left: 14%;
+  width: 66%;
+  height: 36%;
+  border-top: 4px solid rgba(255, 255, 255, 0.92);
+  border-radius: 50%;
+  filter: blur(0.3px);
+  transform: rotate(-10deg);
+  pointer-events: none;
+}
+
+.intro-logo-vessel::after {
+  content: "";
+  position: absolute;
   z-index: 2;
-  border: 1px solid rgba(211, 160, 46, 0.22);
-  border-radius: inherit;
+  inset: 8%;
+  border-radius: 50%;
+  border-bottom: 2px solid rgba(216, 163, 50, 0.34);
+  box-shadow: inset 0 -12px 28px rgba(255, 220, 149, 0.1);
   pointer-events: none;
 }
 
@@ -163,14 +181,15 @@ button {
 
 .intro-logo {
   position: absolute;
+  z-index: 3;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 54%;
+  object-position: 50% 50%;
   mix-blend-mode: normal;
   filter: saturate(1.12) contrast(1.06) drop-shadow(0 10px 20px rgba(36, 78, 119, 0.16));
-  transform: scale(1.08);
+  transform: scale(1.03);
 }
 
 .intro-dismiss {
@@ -363,21 +382,23 @@ button {
 
 .logo-vessel {
   position: relative;
-  width: 230px;
-  height: 152px;
+  isolation: isolate;
+  width: 194px;
+  aspect-ratio: 1;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.92);
-  border-radius: 38% 44% 35% 42% / 42% 33% 46% 38%;
+  border: 1px solid rgba(255, 255, 255, 0.96);
+  border-radius: 50%;
   background:
-    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.96), transparent 28%),
-    radial-gradient(circle at 76% 82%, rgba(255, 214, 126, 0.18), transparent 34%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.16));
+    radial-gradient(circle at 28% 17%, rgba(255, 255, 255, 0.98) 0 2%, rgba(255, 255, 255, 0.58) 9%, transparent 27%),
+    radial-gradient(circle at 72% 82%, rgba(255, 216, 130, 0.22), transparent 34%),
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.48) 0%, rgba(235, 247, 255, 0.28) 58%, rgba(162, 210, 245, 0.15) 79%, rgba(255, 255, 255, 0.6) 100%);
   box-shadow:
-    0 22px 42px rgba(43, 91, 135, 0.17),
-    0 0 52px rgba(75, 153, 230, 0.17),
-    inset 0 1px 0 rgba(255, 255, 255, 0.98),
-    inset 16px 18px 32px rgba(255, 255, 255, 0.28),
-    inset -16px -20px 36px rgba(75, 151, 216, 0.08);
+    0 24px 48px rgba(43, 91, 135, 0.16),
+    0 0 0 5px rgba(255, 255, 255, 0.1),
+    0 0 54px rgba(255, 211, 110, 0.2),
+    inset 0 0 0 3px rgba(255, 255, 255, 0.34),
+    inset 12px 14px 28px rgba(255, 255, 255, 0.66),
+    inset -14px -18px 34px rgba(75, 151, 216, 0.12);
   backdrop-filter: blur(28px) saturate(155%);
   transform: translateZ(0);
   animation: logoBreathe 6s ease-in-out infinite;
@@ -386,10 +407,25 @@ button {
 .logo-vessel::before {
   content: "";
   position: absolute;
-  inset: 1px;
+  z-index: 4;
+  top: 6%;
+  left: 14%;
+  width: 66%;
+  height: 36%;
+  border-top: 3px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  transform: rotate(-10deg);
+  pointer-events: none;
+}
+
+.logo-vessel::after {
+  content: "";
+  position: absolute;
   z-index: 2;
-  border-radius: inherit;
-  border: 1px solid rgba(209, 156, 38, 0.22);
+  inset: 8%;
+  border-radius: 50%;
+  border-bottom: 1px solid rgba(216, 163, 50, 0.32);
+  box-shadow: inset 0 -10px 22px rgba(255, 220, 149, 0.09);
   pointer-events: none;
 }
 
@@ -408,14 +444,15 @@ button {
 
 .brand-logo {
   position: absolute;
+  z-index: 3;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 54%;
+  object-position: 50% 50%;
   mix-blend-mode: normal;
   filter: saturate(1.12) contrast(1.06) drop-shadow(0 10px 20px rgba(36, 78, 119, 0.16));
-  transform: scale(1.08);
+  transform: scale(1.03);
 }
 
 .brand-lockup h1 {
@@ -1049,8 +1086,7 @@ button {
   }
 
   .logo-vessel {
-    width: 164px;
-    height: 104px;
+    width: 138px;
   }
 
   .brand-lockup h1 {
