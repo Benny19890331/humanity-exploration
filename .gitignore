@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.vite/
+.wrangler/
+.next/
+sites-app/node_modules/
+sites-app/dist/
+sites-app/.wrangler/
+sites-app/.next/
+*.tgz
+*.log
+.DS_Store
+

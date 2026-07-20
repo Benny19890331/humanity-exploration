@@ -1,0 +1,154 @@
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { questions } from './data/questions';
+import { TestResult } from './components/TestResult';
+import { Question } from './components/Question';
+
+type TransitionPhase = 'idle' | 'exit' | 'enter';
+type TransitionDirection = 'forward' | 'backward';
+
+const EXIT_DURATION = 330;
+const ENTER_DURATION = 680;
+
+function App() {
+  const [currentQuestion, setCurrentQuestion] = useState(0);
+  const [answers, setAnswers] = useState<number[]>([]);
+  const [isComplete, setIsComplete] = useState(false);
+  const [phase, setPhase] = useState<TransitionPhase>('enter');
+  const [direction, setDirection] = useState<TransitionDirection>('forward');
+  const timers = useRef<number[]>([]);
+  const experienceRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setPhase('idle'), ENTER_DURATION);
+    timers.current.push(timer);
+    return () => timers.current.forEach(window.clearTimeout);
+  }, []);
+
+  const transitionTo = useCallback((next: () => void, nextDirection: TransitionDirection) => {
+    if (phase !== 'idle') return;
+
+    setDirection(nextDirection);
+    setPhase('exit');
+
+    const swapTimer = window.setTimeout(() => {
+      next();
+      setPhase('enter');
+
+      const settleTimer = window.setTimeout(() => setPhase('idle'), ENTER_DURATION);
+      timers.current.push(settleTimer);
+    }, EXIT_DURATION);
+
+    timers.current.push(swapTimer);
+  }, [phase]);
+
+  const handleAnswer = useCallback((answer: number) => {
+    transitionTo(() => {
+      setAnswers(previous => [...previous, answer]);
+
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(previous => previous + 1);
+      } else {
+        setIsComplete(true);
+      }
+    }, 'forward');
+  }, [currentQuestion, transitionTo]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentQuestion === 0) return;
+
+    transitionTo(() => {
+      setCurrentQuestion(previous => previous - 1);
+      setAnswers(previous => previous.slice(0, -1));
+    }, 'backward');
+  }, [currentQuestion, transitionTo]);
+
+  const handleRestart = useCallback(() => {
+    transitionTo(() => {
+      setCurrentQuestion(0);
+      setAnswers([]);
+      setIsComplete(false);
+    }, 'backward');
+  }, [transitionTo]);
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const bounds = experienceRef.current?.getBoundingClientRect();
+    if (!bounds || !experienceRef.current) return;
+
+    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+    experienceRef.current.style.setProperty('--pointer-x', `${x}%`);
+    experienceRef.current.style.setProperty('--pointer-y', `${y}%`);
+  }, []);
+
+  const progress = isComplete ? 100 : ((currentQuestion + 1) / questions.length) * 100;
+  const screenClassName = `screen-transition transition-${phase} ${direction}`;
+  const logoUrl = `${import.meta.env.BASE_URL}rich-team-logo.png`;
+
+  return (
+    <div className="experience" ref={experienceRef} onPointerMove={handlePointerMove}>
+      <div className="atmosphere" aria-hidden="true">
+        <span className="aurora aurora-one" />
+        <span className="aurora aurora-two" />
+        <span className="aurora aurora-three" />
+        <span className="grain" />
+        <span className="pointer-aura" />
+      </div>
+
+      <div className="shell">
+        <header className="hero">
+          <img
+            src="https://images.unsplash.com/photo-1516534775068-ba3e7458af70?auto=format&fit=crop&q=80&w=2070"
+            alt="Mindfulness"
+            className="hero-image"
+          />
+          <div className="hero-veil" />
+          <div className="brand-lockup">
+            <div className="logo-vessel">
+              <span className="logo-glint" aria-hidden="true" />
+              <img src={logoUrl} alt="Rich Team Elite Group" className="brand-logo" />
+            </div>
+            <h1>人性探索測試</h1>
+          </div>
+        </header>
+
+        <div className="progress-island" aria-hidden="true">
+          <div className="progress-track">
+            <span className="progress-fill" style={{ width: `${progress}%` }} />
+          </div>
+          <span className="progress-orb" style={{ left: `${progress}%` }} />
+        </div>
+
+        <main className="glass-stage">
+          <div className="glass-refraction" aria-hidden="true" />
+          <div className={screenClassName}>
+            {!isComplete ? (
+              <Question
+                key={currentQuestion}
+                question={questions[currentQuestion]}
+                onAnswer={handleAnswer}
+                onPrevious={handlePrevious}
+                currentNumber={currentQuestion + 1}
+                total={questions.length}
+                showPrevious={currentQuestion > 0}
+                disabled={phase !== 'idle'}
+              />
+            ) : (
+              <div className="result-screen">
+                <TestResult answers={answers} />
+                <button
+                  onClick={handleRestart}
+                  className="liquid-action restart-button"
+                  disabled={phase !== 'idle'}
+                >
+                  <span>重新測試</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default App;
