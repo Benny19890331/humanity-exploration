@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "人性探索",
   description: "人性探索測試",
   icons: {
-    icon: "/rich-team-logo.png",
+    icon: "/rich-team-logo-transparent.png",
   },
   openGraph: {
     title: "人性探索",

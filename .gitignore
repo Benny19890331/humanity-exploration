@@ -10,4 +10,4 @@ sites-app/.next/
 *.tgz
 *.log
 .DS_Store
-
+work/

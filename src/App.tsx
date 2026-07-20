@@ -8,8 +8,8 @@ type TransitionDirection = 'forward' | 'backward';
 
 const EXIT_DURATION = 220;
 const ENTER_DURATION = 500;
-const INTRO_DURATION = 2500;
-const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen';
+const INTRO_DURATION = 4200;
+const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v2';
 
 function shouldShowIntro() {
   try {
@@ -110,7 +110,7 @@ function App() {
 
   const progress = isComplete ? 100 : ((currentQuestion + 1) / questions.length) * 100;
   const screenClassName = `screen-transition transition-${phase} ${direction}`;
-  const logoUrl = `${import.meta.env.BASE_URL}rich-team-logo.png`;
+  const logoUrl = `${import.meta.env.BASE_URL}rich-team-logo-transparent.png`;
 
   return (
     <div className="experience" ref={experienceRef} onPointerMove={handlePointerMove}>

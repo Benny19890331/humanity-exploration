@@ -58,7 +58,7 @@ button {
     radial-gradient(circle at 22% 26%, rgba(160, 214, 255, 0.72), transparent 42%),
     radial-gradient(circle at 80% 72%, rgba(255, 212, 127, 0.62), transparent 38%),
     linear-gradient(145deg, #eef8ff 0%, #fffaf0 52%, #e8f4ff 100%);
-  animation: introOverlay 2500ms linear both;
+  animation: introOverlay 4200ms linear both;
   contain: layout paint;
 }
 
@@ -112,15 +112,19 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.9);
   border-radius: 38% 44% 35% 42% / 42% 33% 46% 38%;
   background:
-    radial-gradient(circle at 24% 18%, rgba(44, 123, 203, 0.46), transparent 44%),
-    linear-gradient(145deg, #0b2444, #061528 58%, #030b16);
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.96), transparent 28%),
+    radial-gradient(circle at 76% 82%, rgba(255, 214, 126, 0.2), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.15));
   box-shadow:
     0 32px 80px rgba(30, 83, 134, 0.22),
     0 0 70px rgba(255, 211, 110, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 18px 20px 36px rgba(255, 255, 255, 0.3),
+    inset -18px -22px 40px rgba(75, 151, 216, 0.08);
+  backdrop-filter: blur(24px) saturate(145%);
   backface-visibility: hidden;
   will-change: transform, opacity;
-  animation: introLogoFlight 2500ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: introLogoFlight 4200ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .intro-logo-vessel::before {
@@ -164,8 +168,8 @@ button {
   height: 100%;
   object-fit: cover;
   object-position: 50% 54%;
-  mix-blend-mode: screen;
-  filter: saturate(1.18) contrast(1.08) brightness(1.08);
+  mix-blend-mode: normal;
+  filter: saturate(1.12) contrast(1.06) drop-shadow(0 10px 20px rgba(36, 78, 119, 0.16));
   transform: scale(1.08);
 }
 
@@ -365,13 +369,15 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.92);
   border-radius: 38% 44% 35% 42% / 42% 33% 46% 38%;
   background:
-    radial-gradient(circle at 24% 18%, rgba(44, 123, 203, 0.4), transparent 44%),
-    linear-gradient(145deg, #0b2444, #061528 58%, #030b16);
+    radial-gradient(circle at 24% 18%, rgba(255, 255, 255, 0.96), transparent 28%),
+    radial-gradient(circle at 76% 82%, rgba(255, 214, 126, 0.18), transparent 34%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.16));
   box-shadow:
     0 22px 42px rgba(43, 91, 135, 0.17),
     0 0 52px rgba(75, 153, 230, 0.17),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    inset 0 -18px 36px rgba(0, 0, 0, 0.16);
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 16px 18px 32px rgba(255, 255, 255, 0.28),
+    inset -16px -20px 36px rgba(75, 151, 216, 0.08);
   backdrop-filter: blur(28px) saturate(155%);
   transform: translateZ(0);
   animation: logoBreathe 6s ease-in-out infinite;
@@ -407,8 +413,8 @@ button {
   height: 100%;
   object-fit: cover;
   object-position: 50% 54%;
-  mix-blend-mode: screen;
-  filter: saturate(1.16) contrast(1.08) brightness(1.14) drop-shadow(0 10px 22px rgba(38, 81, 124, 0.2));
+  mix-blend-mode: normal;
+  filter: saturate(1.12) contrast(1.06) drop-shadow(0 10px 20px rgba(36, 78, 119, 0.16));
   transform: scale(1.08);
 }
 
@@ -882,7 +888,7 @@ button {
 }
 
 @keyframes introOverlay {
-  0%, 78% { opacity: 1; }
+  0%, 80% { opacity: 1; }
   100% { opacity: 0; visibility: hidden; }
 }
 
@@ -891,15 +897,15 @@ button {
     opacity: 0;
     transform: translate3d(-115vw, 32vh, 0) rotate(-16deg) scale(0.58);
   }
-  46% {
+  26% {
     opacity: 1;
     transform: translate3d(2.5vw, -1vh, 0) rotate(2.2deg) scale(1.08);
   }
-  62% {
+  31% {
     opacity: 1;
     transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
   }
-  78% {
+  79% {
     opacity: 1;
     transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
   }
