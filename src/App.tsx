@@ -329,13 +329,14 @@ function App() {
   useEffect(() => {
     if (!showCelebration) return;
 
+    const isWaitingForAtlas = !prefersReducedMotion && !fireworkAtlas;
     const celebrationTimer = window.setTimeout(() => {
       setShowCelebration(false);
       setIsComplete(true);
-    }, prefersReducedMotion ? 450 : CELEBRATION_DURATION);
+    }, prefersReducedMotion ? 450 : isWaitingForAtlas ? 1800 : CELEBRATION_DURATION);
 
     return () => window.clearTimeout(celebrationTimer);
-  }, [prefersReducedMotion, showCelebration]);
+  }, [fireworkAtlas, prefersReducedMotion, showCelebration]);
 
   useEffect(() => () => {
     if (pointerFrame.current !== null) window.cancelAnimationFrame(pointerFrame.current);
