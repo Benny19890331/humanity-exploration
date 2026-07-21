@@ -28,6 +28,16 @@ const screenVariants = {
 
 const progressTransition = { type: 'spring' as const, bounce: 0, duration: 0.4 };
 
+function createShuffleSeed() {
+  if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
+    const values = new Uint32Array(1);
+    crypto.getRandomValues(values);
+    return values[0];
+  }
+
+  return Math.floor(Math.random() * 0x100000000);
+}
+
 function shouldShowIntro() {
   try {
     return window.sessionStorage.getItem(INTRO_STORAGE_KEY) !== '1';
@@ -42,6 +52,7 @@ function App() {
   const [isComplete, setIsComplete] = useState(false);
   const [direction, setDirection] = useState<TransitionDirection>('forward');
   const [showIntro, setShowIntro] = useState(shouldShowIntro);
+  const [shuffleSeed, setShuffleSeed] = useState(createShuffleSeed);
   const experienceRef = useRef<HTMLDivElement>(null);
   const pointerFrame = useRef<number | null>(null);
   const pointerPosition = useRef({ x: 0, y: 0 });
@@ -98,6 +109,7 @@ function App() {
       setCurrentQuestion(0);
       setAnswers([]);
       setIsComplete(false);
+      setShuffleSeed(createShuffleSeed());
       setShowIntro(true);
     }, 'backward');
   }, [transitionTo]);
@@ -217,6 +229,7 @@ function App() {
                       currentNumber={currentQuestion + 1}
                       total={questions.length}
                       showPrevious={currentQuestion > 0}
+                      shuffleSeed={shuffleSeed}
                     />
                   ) : (
                     <div className="result-screen">

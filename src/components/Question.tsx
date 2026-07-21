@@ -10,6 +10,7 @@ interface QuestionProps {
   currentNumber: number;
   total: number;
   showPrevious: boolean;
+  shuffleSeed: number;
 }
 
 function hashOption(text: string, seed: number) {
@@ -27,16 +28,19 @@ export function Question({
   currentNumber,
   total,
   showPrevious,
+  shuffleSeed,
 }: QuestionProps) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
 
   const shuffledOptions = useMemo(() => {
+    const questionSeed = (shuffleSeed ^ Math.imul(currentNumber, 0x9e3779b1)) >>> 0;
+
     return question.options
       .map((option, originalIndex) => ({ option, originalIndex }))
       .sort((first, second) => (
-        hashOption(first.option.text, currentNumber) - hashOption(second.option.text, currentNumber)
+        hashOption(first.option.text, questionSeed) - hashOption(second.option.text, questionSeed)
       ));
-  }, [question, currentNumber]);
+  }, [question, currentNumber, shuffleSeed]);
 
   const handleOptionPointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
