@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AnimatePresence, LazyMotion, MotionConfig, domMax, m, useReducedMotion } from 'motion/react';
+import { AnimatePresence, LazyMotion, MotionConfig, domAnimation, m, useReducedMotion } from 'motion/react';
 import { questions } from './data/questions';
 import { TestResult } from './components/TestResult';
 import { Question } from './components/Question';
@@ -12,20 +12,17 @@ const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v3';
 const screenVariants = {
   enter: (direction: TransitionDirection) => ({
     opacity: 0,
-    x: direction === 'forward' ? 30 : -30,
-    scale: 0.992,
+    x: direction === 'forward' ? 18 : -18,
   }),
   center: {
     opacity: 1,
     x: 0,
-    scale: 1,
-    transition: { type: 'spring' as const, bounce: 0, duration: 0.42 },
+    transition: { type: 'spring' as const, bounce: 0, duration: 0.36 },
   },
   exit: (direction: TransitionDirection) => ({
     opacity: 0,
-    x: direction === 'forward' ? -22 : 22,
-    scale: 0.996,
-    transition: { type: 'spring' as const, bounce: 0, duration: 0.28 },
+    x: direction === 'forward' ? -12 : 12,
+    transition: { type: 'spring' as const, bounce: 0, duration: 0.18 },
   }),
 };
 
@@ -46,6 +43,8 @@ function App() {
   const [direction, setDirection] = useState<TransitionDirection>('forward');
   const [showIntro, setShowIntro] = useState(shouldShowIntro);
   const experienceRef = useRef<HTMLDivElement>(null);
+  const pointerFrame = useRef<number | null>(null);
+  const pointerPosition = useRef({ x: 0, y: 0 });
   const prefersReducedMotion = useReducedMotion();
 
   const dismissIntro = useCallback(() => {
@@ -63,6 +62,10 @@ function App() {
     const introTimer = window.setTimeout(dismissIntro, prefersReducedMotion ? 80 : INTRO_DURATION);
     return () => window.clearTimeout(introTimer);
   }, [dismissIntro, prefersReducedMotion, showIntro]);
+
+  useEffect(() => () => {
+    if (pointerFrame.current !== null) window.cancelAnimationFrame(pointerFrame.current);
+  }, []);
 
   const transitionTo = useCallback((next: () => void, nextDirection: TransitionDirection) => {
     setDirection(nextDirection);
@@ -100,13 +103,18 @@ function App() {
   }, [transitionTo]);
 
   const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
-    const bounds = experienceRef.current?.getBoundingClientRect();
-    if (!bounds || !experienceRef.current) return;
+    if (!experienceRef.current) return;
+    pointerPosition.current = { x: event.clientX, y: event.clientY };
 
-    const x = ((event.clientX - bounds.left) / bounds.width) * 100;
-    const y = ((event.clientY - bounds.top) / bounds.height) * 100;
-    experienceRef.current.style.setProperty('--pointer-x', `${x}%`);
-    experienceRef.current.style.setProperty('--pointer-y', `${y}%`);
+    if (pointerFrame.current !== null) return;
+    pointerFrame.current = window.requestAnimationFrame(() => {
+      const experience = experienceRef.current;
+      if (experience) {
+        experience.style.setProperty('--pointer-x', `${pointerPosition.current.x}px`);
+        experience.style.setProperty('--pointer-y', `${pointerPosition.current.y}px`);
+      }
+      pointerFrame.current = null;
+    });
   }, []);
 
   const progress = isComplete ? 100 : ((currentQuestion + 1) / questions.length) * 100;
@@ -114,7 +122,7 @@ function App() {
   const logoUrl = `${import.meta.env.BASE_URL}rich-team-logo-transparent.png`;
 
   return (
-    <LazyMotion features={domMax}>
+    <LazyMotion features={domAnimation}>
       <MotionConfig reducedMotion="user">
         <div className="experience" ref={experienceRef} onPointerMove={handlePointerMove}>
           <AnimatePresence>
@@ -197,9 +205,9 @@ function App() {
               <m.span className="progress-orb" initial={false} animate={{ left: `${progress}%` }} transition={progressTransition} />
             </div>
 
-            <m.main className="glass-stage" layout="size" transition={{ layout: progressTransition }}>
+            <main className="glass-stage">
               <div className="glass-refraction" aria-hidden="true" />
-              <AnimatePresence initial={false} custom={direction} mode="popLayout">
+              <AnimatePresence initial={false} custom={direction} mode="wait">
                 <m.div key={screenKey} className="screen-transition" custom={direction} variants={screenVariants} initial="enter" animate="center" exit="exit">
                   {!isComplete ? (
                     <Question
@@ -216,9 +224,9 @@ function App() {
                       <m.button
                         onClick={handleRestart}
                         className="liquid-action restart-button"
-                        whileHover={{ y: -2 }}
-                        whileTap={{ y: 0, scale: 0.975 }}
-                        transition={{ type: 'spring', bounce: 0, duration: 0.18 }}
+                        whileHover={{ y: -1 }}
+                        whileTap={{ y: 0, scale: 0.985 }}
+                        transition={{ type: 'spring', bounce: 0, duration: 0.14 }}
                       >
                         <span>重新測試</span>
                       </m.button>
@@ -226,7 +234,7 @@ function App() {
                   )}
                 </m.div>
               </AnimatePresence>
-            </m.main>
+            </main>
           </div>
         </div>
       </MotionConfig>

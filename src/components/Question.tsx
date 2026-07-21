@@ -60,9 +60,9 @@ export function Question({
           <m.button
             onClick={onPrevious}
             className="previous-button"
-            whileHover={{ x: -2 }}
-            whileTap={{ x: -1, scale: 0.96 }}
-            transition={{ type: 'spring', bounce: 0, duration: 0.18 }}
+            whileHover={{ x: -1 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.14 }}
           >
             <ArrowLeft aria-hidden="true" />
             上一題
@@ -81,16 +81,9 @@ export function Question({
             className={`liquid-option ${selectedOption === originalIndex ? 'is-selected' : ''}`}
             disabled={selectedOption !== null}
             style={{ '--option-order': displayIndex } as React.CSSProperties}
-            initial={{ opacity: 0, y: 10, scale: 0.992 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            whileHover={{ y: -2, scale: 1.006 }}
-            whileTap={{ y: 0, scale: 0.975, transition: { duration: 0.08, ease: 'easeOut' } }}
-            transition={{
-              type: 'spring',
-              bounce: 0,
-              duration: 0.34,
-              delay: 0.025 + displayIndex * 0.035,
-            }}
+            whileHover={{ y: -1, scale: 1.002 }}
+            whileTap={{ y: 0, scale: 0.988 }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.14 }}
           >
             <span className="option-reflection" aria-hidden="true" />
             <span className="option-text">{option.text}</span>
