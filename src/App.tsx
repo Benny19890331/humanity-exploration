@@ -11,14 +11,24 @@ const CELEBRATION_DURATION = 3000;
 const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v3';
 
 const fireworkBursts = [
-  { x: '22%', y: '34%', color: '#f0bd43', delay: 0.08, distance: 104 },
-  { x: '76%', y: '28%', color: '#61aef0', delay: 0.52, distance: 92 },
-  { x: '50%', y: '48%', color: '#f3d47f', delay: 0.96, distance: 122 },
-  { x: '28%', y: '68%', color: '#76c8f4', delay: 1.46, distance: 88 },
-  { x: '73%', y: '67%', color: '#e8aa3d', delay: 1.82, distance: 108 },
+  { x: '50%', y: '38%', color: '#f4c34f', accent: '#fff0a6', delay: 0.04, distance: 154 },
+  { x: '21%', y: '29%', color: '#a668ff', accent: '#e5c8ff', delay: 0.3, distance: 106 },
+  { x: '79%', y: '30%', color: '#3f8cff', accent: '#b7dcff', delay: 0.56, distance: 112 },
+  { x: '27%', y: '69%', color: '#ef3f58', accent: '#ffb0ad', delay: 0.84, distance: 112 },
+  { x: '73%', y: '68%', color: '#f4c34f', accent: '#fff0a6', delay: 1.08, distance: 118 },
+  { x: '50%', y: '57%', color: '#a668ff', accent: '#e5c8ff', delay: 1.3, distance: 132 },
+  { x: '13%', y: '52%', color: '#3f8cff', accent: '#b7dcff', delay: 1.52, distance: 88 },
+  { x: '87%', y: '53%', color: '#ef3f58', accent: '#ffb0ad', delay: 1.7, distance: 90 },
 ];
 
-const fireworkAngles = Array.from({ length: 12 }, (_, index) => (index * 360) / 12);
+const fireworkRayAngles = Array.from({ length: 20 }, (_, index) => ((index * 360) / 20) + (index % 2 ? 2.6 : 0));
+const fireworkEmberAngles = Array.from({ length: 16 }, (_, index) => ((index * 360) / 16) + 7);
+const celebrationStars = Array.from({ length: 28 }, (_, index) => ({
+  x: `${6 + ((index * 37) % 88)}%`,
+  y: `${8 + ((index * 53) % 82)}%`,
+  delay: `${0.08 + (index % 9) * 0.16}s`,
+  color: ['#a668ff', '#f4c34f', '#ef3f58', '#3f8cff'][index % 4],
+}));
 
 const screenVariants = {
   enter: (direction: TransitionDirection) => ({
@@ -75,48 +85,81 @@ function Celebration({ reducedMotion }: CelebrationProps) {
       <m.span
         className="celebration-glow"
         aria-hidden="true"
-        initial={{ opacity: 0, scale: 0.72 }}
-        animate={{ opacity: reducedMotion ? [0, 0.5, 0] : [0, 0.72, 0.24, 0], scale: reducedMotion ? 1 : [0.72, 1.08, 1.18] }}
+        initial={{ opacity: 0, scale: 0.72, x: '-50%', y: '-50%' }}
+        animate={{
+          opacity: reducedMotion ? [0, 0.5, 0] : [0, 0.72, 0.24, 0],
+          scale: reducedMotion ? 1 : [0.72, 1.08, 1.18],
+          x: '-50%',
+          y: '-50%',
+        }}
         transition={{ duration: reducedMotion ? 0.45 : 2.85, times: reducedMotion ? [0, 0.5, 1] : [0, 0.22, 0.72, 1], ease: 'easeOut' }}
       />
+
+      {!reducedMotion && celebrationStars.map((star, index) => (
+        <span
+          className="celebration-star"
+          style={{
+            left: star.x,
+            top: star.y,
+            '--star-delay': star.delay,
+            '--star-color': star.color,
+          } as React.CSSProperties}
+          aria-hidden="true"
+          key={`${star.x}-${star.y}-${index}`}
+        />
+      ))}
 
       {!reducedMotion && fireworkBursts.map((burst, burstIndex) => (
         <span
           className="firework-burst"
-          style={{ left: burst.x, top: burst.y, '--burst-color': burst.color } as React.CSSProperties}
+          style={{
+            left: burst.x,
+            top: burst.y,
+            '--burst-color': burst.color,
+            '--burst-accent': burst.accent,
+            '--burst-delay': `${burst.delay}s`,
+          } as React.CSSProperties}
           aria-hidden="true"
           key={`${burst.x}-${burst.y}`}
         >
-          <m.span
-            className="firework-ring"
-            initial={{ opacity: 0, scale: 0.18 }}
-            animate={{ opacity: [0, 0.72, 0], scale: [0.18, 1, 1.28] }}
-            transition={{ delay: burst.delay, duration: 0.74, times: [0, 0.28, 1], ease: 'easeOut' }}
-          />
-          {fireworkAngles.map((angle, particleIndex) => {
+          <span className="firework-core" />
+          <span className="firework-ring firework-ring-outer" />
+          <span className="firework-ring firework-ring-inner" />
+
+          {fireworkRayAngles.map((angle, particleIndex) => {
             const radians = (angle * Math.PI) / 180;
-            const distance = burst.distance * (particleIndex % 3 === 0 ? 1 : particleIndex % 2 === 0 ? 0.82 : 0.68);
+            const distance = burst.distance * (particleIndex % 4 === 0 ? 1 : particleIndex % 3 === 0 ? 0.86 : 0.72);
             const x = Math.cos(radians) * distance;
             const y = Math.sin(radians) * distance;
 
             return (
-              <m.span
-                className="firework-particle"
-                key={`${burstIndex}-${angle}`}
-                initial={{ opacity: 0, x: 0, y: 0, scaleY: 0.35, rotate: angle + 90 }}
-                animate={{
-                  opacity: [0, 1, 0.86, 0],
-                  x: [0, x * 0.68, x],
-                  y: [0, y * 0.68, y + 24],
-                  scaleY: [0.35, 1, 0.76, 0.18],
-                  rotate: angle + 90,
-                }}
-                transition={{
-                  delay: burst.delay + particleIndex * 0.008,
-                  duration: 1.02,
-                  times: [0, 0.16, 0.68, 1],
-                  ease: [0.16, 0.82, 0.3, 1],
-                }}
+              <span
+                className="firework-ray"
+                style={{
+                  '--particle-x': `${x}px`,
+                  '--particle-y': `${y}px`,
+                  '--particle-rotation': `${angle + 90}deg`,
+                  '--particle-delay': `${burst.delay + particleIndex * 0.006}s`,
+                  '--particle-length': `${particleIndex % 4 === 0 ? 28 : 20}px`,
+                } as React.CSSProperties}
+                key={`ray-${burstIndex}-${angle}`}
+              />
+            );
+          })}
+
+          {fireworkEmberAngles.map((angle, particleIndex) => {
+            const radians = (angle * Math.PI) / 180;
+            const distance = burst.distance * (particleIndex % 3 === 0 ? 0.66 : 0.48);
+
+            return (
+              <span
+                className="firework-ember"
+                style={{
+                  '--particle-x': `${Math.cos(radians) * distance}px`,
+                  '--particle-y': `${Math.sin(radians) * distance}px`,
+                  '--particle-delay': `${burst.delay + 0.08 + particleIndex * 0.01}s`,
+                } as React.CSSProperties}
+                key={`ember-${burstIndex}-${angle}`}
               />
             );
           })}
