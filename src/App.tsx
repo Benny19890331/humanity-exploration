@@ -218,6 +218,48 @@ function App() {
     if (pointerFrame.current !== null) window.cancelAnimationFrame(pointerFrame.current);
   }, []);
 
+  useEffect(() => {
+    let previousTouchX = 0;
+    let previousTouchY = 0;
+
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+      previousTouchX = event.touches[0].clientX;
+      previousTouchY = event.touches[0].clientY;
+    };
+
+    const handleTouchMove = (event: TouchEvent) => {
+      if (event.touches.length !== 1) return;
+
+      const currentTouch = event.touches[0];
+      const deltaX = currentTouch.clientX - previousTouchX;
+      const deltaY = currentTouch.clientY - previousTouchY;
+      previousTouchX = currentTouch.clientX;
+      previousTouchY = currentTouch.clientY;
+
+      if (Math.abs(deltaY) <= Math.abs(deltaX)) return;
+
+      const scroller = document.scrollingElement ?? document.documentElement;
+      const maximumScroll = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+      const isAtTop = scroller.scrollTop <= 0;
+      const isAtBottom = scroller.scrollTop >= maximumScroll - 1;
+      const isPullingPastTop = isAtTop && deltaY > 0;
+      const isPullingPastBottom = isAtBottom && deltaY < 0;
+
+      if (event.cancelable && (maximumScroll <= 1 || isPullingPastTop || isPullingPastBottom)) {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   const transitionTo = useCallback((next: () => void, nextDirection: TransitionDirection) => {
     setDirection(nextDirection);
     next();
