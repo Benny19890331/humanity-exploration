@@ -7,7 +7,18 @@ import { Question } from './components/Question';
 type TransitionDirection = 'forward' | 'backward';
 
 const INTRO_DURATION = 4200;
+const CELEBRATION_DURATION = 3000;
 const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v3';
+
+const fireworkBursts = [
+  { x: '22%', y: '34%', color: '#f0bd43', delay: 0.08, distance: 104 },
+  { x: '76%', y: '28%', color: '#61aef0', delay: 0.52, distance: 92 },
+  { x: '50%', y: '48%', color: '#f3d47f', delay: 0.96, distance: 122 },
+  { x: '28%', y: '68%', color: '#76c8f4', delay: 1.46, distance: 88 },
+  { x: '73%', y: '67%', color: '#e8aa3d', delay: 1.82, distance: 108 },
+];
+
+const fireworkAngles = Array.from({ length: 12 }, (_, index) => (index * 360) / 12);
 
 const screenVariants = {
   enter: (direction: TransitionDirection) => ({
@@ -46,10 +57,80 @@ function shouldShowIntro() {
   }
 }
 
+interface CelebrationProps {
+  reducedMotion: boolean;
+}
+
+function Celebration({ reducedMotion }: CelebrationProps) {
+  return (
+    <m.div
+      className="celebration-overlay"
+      role="status"
+      aria-label="測驗完成，正在揭曉結果"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: reducedMotion ? 0.15 : 0.28 }}
+    >
+      <m.span
+        className="celebration-glow"
+        aria-hidden="true"
+        initial={{ opacity: 0, scale: 0.72 }}
+        animate={{ opacity: reducedMotion ? [0, 0.5, 0] : [0, 0.72, 0.24, 0], scale: reducedMotion ? 1 : [0.72, 1.08, 1.18] }}
+        transition={{ duration: reducedMotion ? 0.45 : 2.85, times: reducedMotion ? [0, 0.5, 1] : [0, 0.22, 0.72, 1], ease: 'easeOut' }}
+      />
+
+      {!reducedMotion && fireworkBursts.map((burst, burstIndex) => (
+        <span
+          className="firework-burst"
+          style={{ left: burst.x, top: burst.y, '--burst-color': burst.color } as React.CSSProperties}
+          aria-hidden="true"
+          key={`${burst.x}-${burst.y}`}
+        >
+          <m.span
+            className="firework-ring"
+            initial={{ opacity: 0, scale: 0.18 }}
+            animate={{ opacity: [0, 0.72, 0], scale: [0.18, 1, 1.28] }}
+            transition={{ delay: burst.delay, duration: 0.74, times: [0, 0.28, 1], ease: 'easeOut' }}
+          />
+          {fireworkAngles.map((angle, particleIndex) => {
+            const radians = (angle * Math.PI) / 180;
+            const distance = burst.distance * (particleIndex % 3 === 0 ? 1 : particleIndex % 2 === 0 ? 0.82 : 0.68);
+            const x = Math.cos(radians) * distance;
+            const y = Math.sin(radians) * distance;
+
+            return (
+              <m.span
+                className="firework-particle"
+                key={`${burstIndex}-${angle}`}
+                initial={{ opacity: 0, x: 0, y: 0, scaleY: 0.35, rotate: angle + 90 }}
+                animate={{
+                  opacity: [0, 1, 0.86, 0],
+                  x: [0, x * 0.68, x],
+                  y: [0, y * 0.68, y + 24],
+                  scaleY: [0.35, 1, 0.76, 0.18],
+                  rotate: angle + 90,
+                }}
+                transition={{
+                  delay: burst.delay + particleIndex * 0.008,
+                  duration: 1.02,
+                  times: [0, 0.16, 0.68, 1],
+                  ease: [0.16, 0.82, 0.3, 1],
+                }}
+              />
+            );
+          })}
+        </span>
+      ))}
+    </m.div>
+  );
+}
+
 function App() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [isComplete, setIsComplete] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   const [direction, setDirection] = useState<TransitionDirection>('forward');
   const [showIntro, setShowIntro] = useState(shouldShowIntro);
   const [shuffleSeed, setShuffleSeed] = useState(createShuffleSeed);
@@ -70,9 +151,25 @@ function App() {
   useEffect(() => {
     if (!showIntro) return;
 
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    experienceRef.current?.scrollTo(0, 0);
+
     const introTimer = window.setTimeout(dismissIntro, prefersReducedMotion ? 80 : INTRO_DURATION);
     return () => window.clearTimeout(introTimer);
   }, [dismissIntro, prefersReducedMotion, showIntro]);
+
+  useEffect(() => {
+    if (!showCelebration) return;
+
+    const celebrationTimer = window.setTimeout(() => {
+      setShowCelebration(false);
+      setIsComplete(true);
+    }, prefersReducedMotion ? 450 : CELEBRATION_DURATION);
+
+    return () => window.clearTimeout(celebrationTimer);
+  }, [prefersReducedMotion, showCelebration]);
 
   useEffect(() => () => {
     if (pointerFrame.current !== null) window.cancelAnimationFrame(pointerFrame.current);
@@ -90,7 +187,7 @@ function App() {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(previous => previous + 1);
       } else {
-        setIsComplete(true);
+        setShowCelebration(true);
       }
     }, 'forward');
   }, [currentQuestion, transitionTo]);
@@ -109,6 +206,7 @@ function App() {
       setCurrentQuestion(0);
       setAnswers([]);
       setIsComplete(false);
+      setShowCelebration(false);
       setShuffleSeed(createShuffleSeed());
       setShowIntro(true);
     }, 'backward');
@@ -129,7 +227,7 @@ function App() {
     });
   }, []);
 
-  const progress = isComplete ? 100 : ((currentQuestion + 1) / questions.length) * 100;
+  const progress = isComplete || showCelebration ? 100 : ((currentQuestion + 1) / questions.length) * 100;
   const screenKey = isComplete ? 'result' : `question-${currentQuestion}`;
   const logoUrl = `${import.meta.env.BASE_URL}rich-team-logo-transparent.png`;
 
@@ -187,6 +285,10 @@ function App() {
                 />
               </m.div>
             )}
+          </AnimatePresence>
+
+          <AnimatePresence>
+            {showCelebration && <Celebration reducedMotion={Boolean(prefersReducedMotion)} />}
           </AnimatePresence>
 
           <div className="atmosphere" aria-hidden="true">
