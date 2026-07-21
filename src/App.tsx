@@ -8,9 +8,19 @@ type TransitionDirection = 'forward' | 'backward';
 
 const INTRO_DURATION = 4200;
 const CELEBRATION_DURATION = 3000;
+const FIREWORK_BURST_DURATION = 900;
+const FIREWORK_ATLAS_COLUMNS = 5;
+const FIREWORK_ATLAS_FRAME_SIZE = 240;
+const FIREWORK_FRAME_COUNT = 45;
 const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v3';
-const fireworkGifUrl = `${import.meta.env.BASE_URL}firework-transparent.gif`;
+const fireworkAtlasUrl = `${import.meta.env.BASE_URL}firework-atlas.webp`;
 const fireworkTones = ['purple', 'gold', 'red', 'blue'] as const;
+const fireworkTint = {
+  purple: { color: '#b26cff', strength: 0.62, glow: 'rgba(178, 108, 255, 0.82)' },
+  gold: { color: '#ffd76e', strength: 0.12, glow: 'rgba(255, 211, 104, 0.84)' },
+  red: { color: '#ef476f', strength: 0.56, glow: 'rgba(239, 71, 111, 0.8)' },
+  blue: { color: '#4c9dff', strength: 0.58, glow: 'rgba(76, 157, 255, 0.82)' },
+} as const;
 
 const screenVariants = {
   enter: (direction: TransitionDirection) => ({
@@ -50,6 +60,8 @@ function shouldShowIntro() {
 }
 
 interface CelebrationProps {
+  atlas: HTMLImageElement | null;
+  fireworks: FireworkBurst[];
   reducedMotion: boolean;
 }
 
@@ -59,20 +71,10 @@ interface FireworkBurst {
   delay: number;
   id: number;
   rotation: number;
-  size: number;
+  sizeRatio: number;
   tone: FireworkTone;
-  x: number;
-  y: number;
-}
-
-interface GifFireworkProps {
-  delay: number;
-  index: number;
-  rotation: number;
-  size: number;
-  tone: FireworkTone;
-  x: number;
-  y: number;
+  xRatio: number;
+  yRatio: number;
 }
 
 function randomBetween(min: number, max: number) {
@@ -83,16 +85,17 @@ function createRandomFireworks(): FireworkBurst[] {
   const viewportWidth = typeof window === 'undefined' ? 1200 : Math.max(window.innerWidth, 320);
   const viewportHeight = typeof window === 'undefined' ? 800 : Math.max(window.innerHeight, 480);
   const isNarrow = viewportWidth <= 640;
+  const burstCount = isNarrow ? 8 : 10;
+  const maximumDelay = CELEBRATION_DURATION - FIREWORK_BURST_DURATION - 80;
   const minSize = isNarrow
-    ? Math.max(132, Math.min(168, viewportWidth * 0.38))
-    : Math.max(190, Math.min(250, Math.min(viewportWidth, viewportHeight) * 0.27));
+    ? Math.max(124, Math.min(156, viewportWidth * 0.35))
+    : Math.max(176, Math.min(230, Math.min(viewportWidth, viewportHeight) * 0.24));
   const maxSize = isNarrow
-    ? Math.max(minSize, Math.min(210, viewportWidth * 0.52))
-    : Math.max(minSize, Math.min(340, Math.min(viewportWidth, viewportHeight) * 0.39));
-  const delays = [0, 100, 220, 360, 520];
+    ? Math.max(minSize, Math.min(194, viewportWidth * 0.47))
+    : Math.max(minSize, Math.min(320, Math.min(viewportWidth, viewportHeight) * 0.35));
   const bursts: FireworkBurst[] = [];
 
-  delays.forEach((delay, index) => {
+  Array.from({ length: burstCount }).forEach((_, index) => {
     const size = Math.round(randomBetween(minSize, maxSize));
     const halfSize = size / 2;
     const edgePadding = isNarrow ? 8 : 18;
@@ -115,53 +118,129 @@ function createRandomFireworks(): FireworkBurst[] {
     }
 
     bursts.push({
-      delay,
+      delay: Math.round((maximumDelay * index) / Math.max(1, burstCount - 1)),
       id: index,
       rotation: randomBetween(-7, 7),
-      size,
+      sizeRatio: size / Math.min(viewportWidth, viewportHeight),
       tone: fireworkTones[index % fireworkTones.length],
-      x: Math.round(x),
-      y: Math.round(y),
+      xRatio: x / viewportWidth,
+      yRatio: y / viewportHeight,
     });
   });
 
   return bursts;
 }
 
-function GifFirework({ delay, index, rotation, size, tone, x, y }: GifFireworkProps) {
-  const [isVisible, setIsVisible] = useState(delay === 0);
+function FireworkCanvas({ atlas, fireworks }: Pick<CelebrationProps, 'atlas' | 'fireworks'>) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (delay === 0) return;
-    const timer = window.setTimeout(() => setIsVisible(true), delay);
-    return () => window.clearTimeout(timer);
-  }, [delay]);
+    const canvas = canvasRef.current;
+    if (!atlas || !canvas) return;
 
-  if (!isVisible) return null;
+    const context = canvas.getContext('2d', { alpha: true });
+    if (!context) return;
 
-  const remainingDuration = (CELEBRATION_DURATION - delay) / 1000;
+    const scratch = document.createElement('canvas');
+    scratch.width = FIREWORK_ATLAS_FRAME_SIZE;
+    scratch.height = FIREWORK_ATLAS_FRAME_SIZE;
+    const scratchContext = scratch.getContext('2d', { alpha: true });
+    if (!scratchContext) return;
 
-  return (
-    <span
-      className={`firework-gif-anchor firework-gif-anchor-${tone}`}
-      style={{ left: x, top: y, width: size }}
-      aria-hidden="true"
-    >
-      <m.img
-        src={`${fireworkGifUrl}#burst-${index}`}
-        alt=""
-        className={`firework-gif firework-gif-${tone}`}
-        initial={{ opacity: 0, rotate: rotation - 2, scale: 0.76 }}
-        animate={{ opacity: [0, 1, 1, 0.12], rotate: rotation, scale: [0.76, 1, 1.035] }}
-        transition={{ duration: remainingDuration, times: [0, 0.07, 0.86, 1], ease: 'linear' }}
-      />
-    </span>
-  );
+    let width = 0;
+    let height = 0;
+    let animationFrame = 0;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+
+    const resizeCanvas = () => {
+      width = Math.max(window.innerWidth, 320);
+      height = Math.max(window.innerHeight, 480);
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = 'high';
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+    const startedAt = performance.now();
+
+    const draw = (now: number) => {
+      const elapsed = now - startedAt;
+      context.clearRect(0, 0, width, height);
+
+      fireworks.forEach((firework) => {
+        const localTime = elapsed - firework.delay;
+        if (localTime < 0 || localTime > FIREWORK_BURST_DURATION) return;
+
+        const progress = Math.min(1, localTime / FIREWORK_BURST_DURATION);
+        const frameIndex = Math.min(FIREWORK_FRAME_COUNT - 1, Math.floor(progress * FIREWORK_FRAME_COUNT));
+        const sourceX = (frameIndex % FIREWORK_ATLAS_COLUMNS) * FIREWORK_ATLAS_FRAME_SIZE;
+        const sourceY = Math.floor(frameIndex / FIREWORK_ATLAS_COLUMNS) * FIREWORK_ATLAS_FRAME_SIZE;
+        const shortSide = Math.min(width, height);
+        const size = firework.sizeRatio * shortSide;
+        const halfSize = size / 2;
+        const edgePadding = width <= 640 ? 8 : 18;
+        const x = Math.min(width - halfSize - edgePadding, Math.max(halfSize + edgePadding, firework.xRatio * width));
+        const y = Math.min(height - halfSize - edgePadding, Math.max(halfSize + edgePadding, firework.yRatio * height));
+        const fadeIn = Math.min(1, progress / 0.07);
+        const fadeOut = progress > 0.84 ? Math.max(0, (1 - progress) / 0.16) : 1;
+        const opacity = fadeIn * fadeOut;
+        const scale = 0.82 + 0.2 * (1 - Math.pow(1 - progress, 3));
+        const tint = fireworkTint[firework.tone];
+
+        scratchContext.clearRect(0, 0, FIREWORK_ATLAS_FRAME_SIZE, FIREWORK_ATLAS_FRAME_SIZE);
+        scratchContext.globalAlpha = 1;
+        scratchContext.globalCompositeOperation = 'source-over';
+        scratchContext.drawImage(
+          atlas,
+          sourceX,
+          sourceY,
+          FIREWORK_ATLAS_FRAME_SIZE,
+          FIREWORK_ATLAS_FRAME_SIZE,
+          0,
+          0,
+          FIREWORK_ATLAS_FRAME_SIZE,
+          FIREWORK_ATLAS_FRAME_SIZE,
+        );
+        scratchContext.globalCompositeOperation = 'source-atop';
+        scratchContext.globalAlpha = tint.strength;
+        scratchContext.fillStyle = tint.color;
+        scratchContext.fillRect(0, 0, FIREWORK_ATLAS_FRAME_SIZE, FIREWORK_ATLAS_FRAME_SIZE);
+        scratchContext.globalAlpha = 1;
+        scratchContext.globalCompositeOperation = 'source-over';
+
+        context.save();
+        context.globalAlpha = opacity;
+        context.translate(x, y);
+        context.rotate((firework.rotation * Math.PI) / 180);
+        context.scale(scale, scale);
+        context.shadowBlur = Math.min(22, size * 0.09);
+        context.shadowColor = tint.glow;
+        context.drawImage(scratch, -halfSize, -halfSize, size, size);
+        context.restore();
+      });
+
+      if (elapsed < CELEBRATION_DURATION) {
+        animationFrame = window.requestAnimationFrame(draw);
+      }
+    };
+
+    animationFrame = window.requestAnimationFrame(draw);
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, [atlas, fireworks]);
+
+  return <canvas ref={canvasRef} className="firework-canvas" aria-hidden="true" />;
 }
 
-function Celebration({ reducedMotion }: CelebrationProps) {
-  const [fireworks] = useState(createRandomFireworks);
-
+function Celebration({ atlas, fireworks, reducedMotion }: CelebrationProps) {
   return (
     <m.div
       className="celebration-overlay"
@@ -185,9 +264,7 @@ function Celebration({ reducedMotion }: CelebrationProps) {
         transition={{ duration: reducedMotion ? 0.45 : 2.85, times: reducedMotion ? [0, 0.5, 1] : [0, 0.22, 0.72, 1], ease: 'easeOut' }}
       />
 
-      {!reducedMotion && fireworks.map((firework, index) => (
-        <GifFirework {...firework} index={index} key={firework.id} />
-      ))}
+      {!reducedMotion && <FireworkCanvas atlas={atlas} fireworks={fireworks} />}
     </m.div>
   );
 }
@@ -200,6 +277,8 @@ function App() {
   const [direction, setDirection] = useState<TransitionDirection>('forward');
   const [showIntro, setShowIntro] = useState(shouldShowIntro);
   const [shuffleSeed, setShuffleSeed] = useState(createShuffleSeed);
+  const [fireworks, setFireworks] = useState(createRandomFireworks);
+  const [fireworkAtlas, setFireworkAtlas] = useState<HTMLImageElement | null>(null);
   const experienceRef = useRef<HTMLDivElement>(null);
   const pointerFrame = useRef<number | null>(null);
   const pointerPosition = useRef({ x: 0, y: 0 });
@@ -212,6 +291,27 @@ function App() {
     } catch {
       // The intro can still complete when storage is unavailable.
     }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const atlas = new Image();
+    atlas.decoding = 'async';
+    atlas.src = fireworkAtlasUrl;
+
+    const markReady = () => {
+      if (!cancelled) setFireworkAtlas(atlas);
+    };
+
+    atlas.decode().then(markReady).catch(() => {
+      if (atlas.complete) markReady();
+      else atlas.addEventListener('load', markReady, { once: true });
+    });
+
+    return () => {
+      cancelled = true;
+      atlas.removeEventListener('load', markReady);
+    };
   }, []);
 
   useEffect(() => {
@@ -316,6 +416,7 @@ function App() {
       setIsComplete(false);
       setShowCelebration(false);
       setShuffleSeed(createShuffleSeed());
+      setFireworks(createRandomFireworks());
       setShowIntro(true);
     }, 'backward');
   }, [transitionTo]);
@@ -396,7 +497,13 @@ function App() {
           </AnimatePresence>
 
           <AnimatePresence>
-            {showCelebration && <Celebration reducedMotion={Boolean(prefersReducedMotion)} />}
+            {showCelebration && (
+              <Celebration
+                atlas={fireworkAtlas}
+                fireworks={fireworks}
+                reducedMotion={Boolean(prefersReducedMotion)}
+              />
+            )}
           </AnimatePresence>
 
           <div className="atmosphere" aria-hidden="true">
