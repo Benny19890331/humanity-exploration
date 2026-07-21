@@ -7,7 +7,7 @@ export function getPersonalityType(answers: number[]): PersonalityResult {
   }, {} as Record<number, number>);
 
   const maxCount = Math.max(...Object.values(counts));
-  const dominantType = Object.entries(counts).find(([_, count]) => count === maxCount)?.[0];
+  const dominantType = Object.entries(counts).find(([, count]) => count === maxCount)?.[0];
 
   const isLarge = maxCount > 7;
   
@@ -38,7 +38,7 @@ export function getPersonalityType(answers: number[]): PersonalityResult {
     },
     '4': {
       type: isLarge ? '大蜜蜂' : '蜜蜂',
-      imageUrl: 'https://images.unsplash.com/photo-1576363389816-f8c26958ea0e?auto=format&fit=crop&q=80&w=1000',
+      imageUrl: `${import.meta.env.BASE_URL}bee-result.png`,
       description: `綠佳利CFC代表人物就是侯閔議老師。蜜蜂是分析型人才，熱愛數據與程序。他們的邏輯清晰，總是精確地計劃每一步。例如，打獵時，他們會先測量風速，再精確瞄準，但往往因為分析過久，獵物早已跑掉了！蜜蜂型的人適合建構系統與流程，但也因過於重視數據，缺乏想像力，可能錯失一些機會。因此，蜜蜂需要學會突破自我設限，接納更多創新的想法。`
     }
   };
