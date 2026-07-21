@@ -207,19 +207,37 @@ button {
   position: fixed;
   inset: 0;
   z-index: 900;
+  isolation: isolate;
   overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(circle at 18% 22%, rgba(96, 39, 142, 0.24), transparent 35%),
-    radial-gradient(circle at 82% 26%, rgba(24, 84, 164, 0.25), transparent 35%),
-    radial-gradient(circle at 52% 72%, rgba(135, 63, 30, 0.2), transparent 38%),
-    linear-gradient(155deg, rgba(4, 5, 16, 0.97), rgba(8, 11, 31, 0.96) 54%, rgba(14, 6, 21, 0.97));
-  backdrop-filter: blur(4px) brightness(0.34) saturate(145%);
+    radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.72), transparent 34%),
+    radial-gradient(circle at 82% 22%, rgba(169, 210, 247, 0.3), transparent 38%),
+    radial-gradient(circle at 52% 78%, rgba(255, 222, 153, 0.24), transparent 40%),
+    linear-gradient(145deg, rgba(247, 251, 255, 0.62), rgba(218, 232, 246, 0.5) 52%, rgba(255, 247, 232, 0.56));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -1px 0 rgba(97, 135, 170, 0.16);
+  -webkit-backdrop-filter: blur(28px) saturate(148%) brightness(1.03);
+  backdrop-filter: blur(28px) saturate(148%) brightness(1.03);
   contain: strict;
+}
+
+.celebration-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(118deg, rgba(255, 255, 255, 0.68), transparent 24%, transparent 72%, rgba(255, 218, 139, 0.2)),
+    repeating-linear-gradient(112deg, rgba(67, 104, 138, 0.025) 0 1px, transparent 1px 6px);
+  mix-blend-mode: soft-light;
 }
 
 .celebration-glow {
   position: absolute;
+  z-index: 1;
   left: 50%;
   top: 50%;
   width: min(82vw, 720px);
@@ -1041,7 +1059,12 @@ button {
   }
 
   .celebration-overlay {
-    backdrop-filter: none;
+    background:
+      radial-gradient(circle at 20% 16%, rgba(255, 255, 255, 0.76), transparent 35%),
+      radial-gradient(circle at 84% 24%, rgba(171, 211, 246, 0.28), transparent 40%),
+      linear-gradient(150deg, rgba(247, 251, 255, 0.72), rgba(220, 233, 246, 0.62) 54%, rgba(255, 247, 232, 0.68));
+    -webkit-backdrop-filter: blur(14px) saturate(132%) brightness(1.02);
+    backdrop-filter: blur(14px) saturate(132%) brightness(1.02);
   }
 
   .shell {
@@ -1194,7 +1217,6 @@ button {
 }
 
 @media (prefers-reduced-transparency: reduce) {
-  .celebration-overlay,
   .intro-logo-vessel,
   .logo-vessel,
   .progress-island,
@@ -1204,6 +1226,16 @@ button {
   .result-copy {
     background-color: rgba(255, 255, 255, 0.94);
     backdrop-filter: none;
+  }
+
+  .celebration-overlay {
+    background: rgba(244, 249, 253, 0.97);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .celebration-overlay::before {
+    opacity: 0.22;
   }
 }
 
