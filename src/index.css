@@ -235,17 +235,16 @@ button {
 .firework-gif-anchor {
   position: absolute;
   z-index: 2;
-  display: grid;
-  width: 0;
-  height: 0;
-  place-items: center;
+  display: block;
+  aspect-ratio: 500 / 490;
+  transform: translate3d(-50%, -50%, 0);
+  will-change: transform;
 }
 
 .firework-gif {
-  grid-area: 1 / 1;
-  width: clamp(250px, 43vw, 520px);
-  max-width: none;
-  height: auto;
+  display: block;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   transform-origin: 50% 50%;
   will-change: transform, opacity, filter;
@@ -1065,10 +1064,6 @@ button {
 
   .celebration-overlay {
     backdrop-filter: none;
-  }
-
-  .firework-gif {
-    width: min(70vw, 340px);
   }
 
   .shell {

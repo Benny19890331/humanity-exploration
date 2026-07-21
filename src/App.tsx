@@ -10,13 +10,7 @@ const INTRO_DURATION = 4200;
 const CELEBRATION_DURATION = 3000;
 const INTRO_STORAGE_KEY = 'humanity-exploration-intro-seen-v3';
 const fireworkGifUrl = `${import.meta.env.BASE_URL}firework-transparent.gif`;
-
-const gifFireworks = [
-  { x: '21%', y: '34%', tone: 'purple', delay: 0 },
-  { x: '50%', y: '29%', tone: 'gold', delay: 180 },
-  { x: '79%', y: '38%', tone: 'red', delay: 380 },
-  { x: '50%', y: '70%', tone: 'blue', delay: 620 },
-];
+const fireworkTones = ['purple', 'gold', 'red', 'blue'] as const;
 
 const screenVariants = {
   enter: (direction: TransitionDirection) => ({
@@ -59,15 +53,82 @@ interface CelebrationProps {
   reducedMotion: boolean;
 }
 
+type FireworkTone = (typeof fireworkTones)[number];
+
+interface FireworkBurst {
+  delay: number;
+  id: number;
+  rotation: number;
+  size: number;
+  tone: FireworkTone;
+  x: number;
+  y: number;
+}
+
 interface GifFireworkProps {
   delay: number;
   index: number;
-  tone: string;
-  x: string;
-  y: string;
+  rotation: number;
+  size: number;
+  tone: FireworkTone;
+  x: number;
+  y: number;
 }
 
-function GifFirework({ delay, index, tone, x, y }: GifFireworkProps) {
+function randomBetween(min: number, max: number) {
+  return min + Math.random() * Math.max(0, max - min);
+}
+
+function createRandomFireworks(): FireworkBurst[] {
+  const viewportWidth = typeof window === 'undefined' ? 1200 : Math.max(window.innerWidth, 320);
+  const viewportHeight = typeof window === 'undefined' ? 800 : Math.max(window.innerHeight, 480);
+  const isNarrow = viewportWidth <= 640;
+  const minSize = isNarrow
+    ? Math.max(132, Math.min(168, viewportWidth * 0.38))
+    : Math.max(190, Math.min(250, Math.min(viewportWidth, viewportHeight) * 0.27));
+  const maxSize = isNarrow
+    ? Math.max(minSize, Math.min(210, viewportWidth * 0.52))
+    : Math.max(minSize, Math.min(340, Math.min(viewportWidth, viewportHeight) * 0.39));
+  const delays = [0, 100, 220, 360, 520];
+  const bursts: FireworkBurst[] = [];
+
+  delays.forEach((delay, index) => {
+    const size = Math.round(randomBetween(minSize, maxSize));
+    const halfSize = size / 2;
+    const edgePadding = isNarrow ? 8 : 18;
+    const minX = halfSize + edgePadding;
+    const maxX = Math.max(minX, viewportWidth - halfSize - edgePadding);
+    const minY = halfSize + edgePadding;
+    const maxY = Math.max(minY, viewportHeight - halfSize - edgePadding);
+    let x = randomBetween(minX, maxX);
+    let y = randomBetween(minY, maxY);
+
+    for (let attempt = 0; attempt < 16; attempt += 1) {
+      const overlaps = bursts.some((burst) => {
+        const distance = Math.hypot(x - burst.x, y - burst.y);
+        return distance < (size + burst.size) * 0.3;
+      });
+
+      if (!overlaps) break;
+      x = randomBetween(minX, maxX);
+      y = randomBetween(minY, maxY);
+    }
+
+    bursts.push({
+      delay,
+      id: index,
+      rotation: randomBetween(-7, 7),
+      size,
+      tone: fireworkTones[index % fireworkTones.length],
+      x: Math.round(x),
+      y: Math.round(y),
+    });
+  });
+
+  return bursts;
+}
+
+function GifFirework({ delay, index, rotation, size, tone, x, y }: GifFireworkProps) {
   const [isVisible, setIsVisible] = useState(delay === 0);
 
   useEffect(() => {
@@ -83,15 +144,15 @@ function GifFirework({ delay, index, tone, x, y }: GifFireworkProps) {
   return (
     <span
       className={`firework-gif-anchor firework-gif-anchor-${tone}`}
-      style={{ left: x, top: y }}
+      style={{ left: x, top: y, width: size }}
       aria-hidden="true"
     >
       <m.img
         src={`${fireworkGifUrl}#burst-${index}`}
         alt=""
         className={`firework-gif firework-gif-${tone}`}
-        initial={{ opacity: 0, scale: 0.72 }}
-        animate={{ opacity: [0, 1, 1, 0.12], scale: [0.72, 1, 1.04] }}
+        initial={{ opacity: 0, rotate: rotation - 2, scale: 0.76 }}
+        animate={{ opacity: [0, 1, 1, 0.12], rotate: rotation, scale: [0.76, 1, 1.035] }}
         transition={{ duration: remainingDuration, times: [0, 0.07, 0.86, 1], ease: 'linear' }}
       />
     </span>
@@ -99,6 +160,8 @@ function GifFirework({ delay, index, tone, x, y }: GifFireworkProps) {
 }
 
 function Celebration({ reducedMotion }: CelebrationProps) {
+  const [fireworks] = useState(createRandomFireworks);
+
   return (
     <m.div
       className="celebration-overlay"
@@ -122,8 +185,8 @@ function Celebration({ reducedMotion }: CelebrationProps) {
         transition={{ duration: reducedMotion ? 0.45 : 2.85, times: reducedMotion ? [0, 0.5, 1] : [0, 0.22, 0.72, 1], ease: 'easeOut' }}
       />
 
-      {!reducedMotion && gifFireworks.map((firework, index) => (
-        <GifFirework {...firework} index={index} key={firework.tone} />
+      {!reducedMotion && fireworks.map((firework, index) => (
+        <GifFirework {...firework} index={index} key={firework.id} />
       ))}
     </m.div>
   );
