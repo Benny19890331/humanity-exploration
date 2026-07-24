@@ -1039,6 +1039,8 @@ button {
 @media (max-width: 640px) {
   .experience {
     min-height: 100svh;
+    min-height: 100dvh;
+    overflow: visible;
   }
 
   .experience::before {
